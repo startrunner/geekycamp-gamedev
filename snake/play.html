@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+    <head>
+        <style>
+            td{
+                width: .2cm;
+                height: .2cm;
+                margin: 0;
+                padding: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <table></table>
+        <div class="menu">
+            <ul>
+                <li><a href="#" onclick="game.paused = false;">Resume Game</a></li>
+                <li><a href="#" onclick="location.reload();">Restart Game</a></li>
+                <li><a href="index.html">Back to main menu</a></li>
+            </ul>
+        </div>
+    </body>
+
+    <script src="play.js"></script>
+    <script>
+        let config = {
+            portals: false,
+            size: 16
+        };
+
+        console.log(document.URL);
+        let queryString = document.URL.split('?')[1];
+        let querySplit = queryString.split('&');
+        console.log(querySplit);
+        querySplit.forEach(x=>{
+            let xSplit = x.split('=');
+            config[xSplit[0]]=parseInt(xSplit[1]);
+        })
+
+        console.log(config);
+
+
+        let game = new SnakeGame('html', config.size, config.portals);
+    </script>
+</html>

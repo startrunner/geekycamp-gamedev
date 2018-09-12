@@ -2,7 +2,8 @@ const CellStatus = {
     Wall: 1,
     Snake: 2,
     Food: 3,
-    Empty: 4
+    Empty: 4,
+    Portal: 5
 };
 
 const Direction = {
@@ -16,18 +17,23 @@ const Key = {
     W: 87,
     A: 65,
     S: 83,
-    D: 68
+    D: 68,
+    Escape: 27
 };
+
+
 
 const StyleForStatus = {
     [CellStatus.Wall]: "background: black;",
     [CellStatus.Snake]: "background: green;",
     [CellStatus.Food]: "background: red;",
-    [CellStatus.Empty]: "background: none;"
+    [CellStatus.Empty]: "background: none;",
+    [CellStatus.Portal]: "background: pink"
 };
 
 class SnakeGame{
-    constructor(elementSelector, rowCount){
+    constructor(elementSelector, rowCount, enablePortals){
+        this.enablePortals = enablePortals;
         this.element = document.querySelector(elementSelector);
         this.table = this.element.querySelector('table');
         this.rowCount = rowCount;
@@ -39,6 +45,9 @@ class SnakeGame{
         this.head = {x: 0, y: 0};
         this.interval = 200;
         this.inputKey = new Queue();
+        this.currentPortal = null;
+        this.lastFood = {  };
+        this.paused = false;
 
         for(let i=0;i<rowCount;i++){
             let tableRow = document.createElement('tr');
@@ -67,6 +76,7 @@ class SnakeGame{
             this.head = {x: 3, y: 3+i};
         }
 
+        this.spawnPortal();
         for(let i=0;i<5;i++)this.spawnFood(rowCount);
 
         setTimeout(()=>this.tick(), this.interval);
@@ -81,6 +91,11 @@ class SnakeGame{
         const code = this.inputKey.pop();
         if(!code)return;
 
+        if(code == Key.Escape){
+            this.paused = !this.paused;
+            return;
+        }
+
         if(this.direction!=Direction.Up && this.direction!=Direction.Down){
             if(code == Key.W)this.direction = Direction.Up;
             if(code == Key.S)this.direction = Direction.Down;
@@ -89,6 +104,18 @@ class SnakeGame{
             if(code == Key.A)this.direction = Direction.Left;
             if(code == Key.D)this.direction = Direction.Right;
         }
+    }
+
+    spawnPortal(){
+        if(!this.enablePortals)return;
+        if(this.currentPortal!=null)return;
+        let x, y;
+        while(this.getStatus(x, y)!=CellStatus.Empty){
+            x=this.getRandomInt(3, this.rowCount-3);
+            y=this.getRandomInt(3, this.rowCount-3);
+        }
+        this.currentPortal = { x: x, y: y };
+        this.setStatus(x, y, CellStatus.Portal);
     }
 
     spawnFood(rowCount){
@@ -105,8 +132,14 @@ class SnakeGame{
     tick(){
         let green = 255;
         this.handleInput();
+        if(this.paused){
+            setTimeout(()=>this.tick(), 3000);
+            return;
+        }
         const moveTo = this.move(this.head.x, this.head.y, this.direction);
-        const moveToStatus = this.getStatus(moveTo.x, moveTo.y);
+        const moveToStatus = this.getStatus(moveTo.x, moveTo.y)+0;
+        let eating = false;
+        
         
         if(moveToStatus == CellStatus.Wall){
             alert("You hit a wall!");
@@ -124,7 +157,14 @@ class SnakeGame{
             let popped = this.snake.pop();
             this.setStatus(popped.x, popped.y, CellStatus.Empty);
         }
-        else this.spawnFood(this.rowCount);
+        else{
+            this.spawnFood(this.rowCount);
+            eating = true;
+            this.ateLastTime = true;
+            this.lastFood= {x: moveTo.x, y: moveTo.y};
+        }
+
+        if(moveToStatus == CellStatus.Portal)this.spawnPortal();
 
         this.snake.forEach(seg=>{
             this.setStatus(seg.x, seg.y, CellStatus.Snake);
@@ -138,6 +178,18 @@ class SnakeGame{
     }
 
     move(x, y, direction){
+        if(
+            this.enablePortals &&
+             this.currentPortal!=null &&
+            x==this.lastFood.x && y==this.lastFood.y     
+        ){
+            let portal = this.currentPortal;
+            this.setStatus(this.currentPortal.x, this.currentPortal.y, CellStatus.Empty);
+            this.currentPortal = null;
+            this.spawnPortal();
+            return { x: portal.x, y: portal.y };
+        }
+
         if(direction === Direction.Up)return {x: x-1, y: y};
         if(direction === Direction.Down)return {x: x+1, y: y};
         if(direction === Direction.Left)return {x: x, y: y-1};

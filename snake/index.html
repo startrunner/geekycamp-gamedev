@@ -1,23 +1,25 @@
-<!doctype html>
+<!doctype.html>
 <html>
     <head>
-        <style>
-            td{
-                width: .2cm;
-                height: .2cm;
-                margin: 0;
-                padding: 0;
-            }
-        </style>
+
     </head>
     <body>
-        <table></table>
+        <h1>Snake</h1>
+        <h2>Alexander Ivanov</h2>
+        <h3>Controls: WASD</h3>
+        <h3>Food is red, portals are pink</h3>
+        <h3>Pause is Escape, and so is resume.</h3>
+        <form action="play.html" method="GET">
+            <label for="portals">Portals</label>
+            <select name="portals">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
 
-        </table>
+            <label for="input-size">Arena Size</label>
+            <input id="input-size" name="size" type="number" syep=1 value="12"/>
+
+            <button type="submit">Play!</button>
+        </form>
     </body>
-
-    <script src="index.js"></script>
-    <script>
-        let game = new SnakeGame('html', 20);
-    </script>
 </html>
